@@ -1,10 +1,15 @@
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Home from './pages/Home'
+import WordPage from './pages/WordPage'
 
 function App() {
   return (
-    <div className="app">
-      <h1>Lyricist's Lexicon</h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/word/:id" element={<WordPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
