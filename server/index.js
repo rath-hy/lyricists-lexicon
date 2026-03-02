@@ -35,6 +35,22 @@ app.get('/api/words/:id', async (req, res) => {
   res.json(word)
 })
 
+app.get(`/api/consonance`, async (req, res) => {
+  const onset_combo = req.query.onset_combo
+  const words = await Word.findAll({
+    where: {
+      onset_combination: onset_combo
+    },
+  })
+  
+  res.json(words.map(w => ({
+    id: w.id,
+    word: w.word,
+    syllable_count: w.syllable_count,
+    onset_permutation: w.onset_permutation
+  })))
+})
+
 const start = async () => {
   await connectToDatabase()
   await sequelize.sync()
