@@ -20,6 +20,10 @@ Word.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
+  rhyme_permutation: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
 }, {
   sequelize,
   tableName: 'words',

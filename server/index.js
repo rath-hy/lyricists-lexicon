@@ -51,6 +51,38 @@ app.get(`/api/consonance`, async (req, res) => {
   })))
 })
 
+app.get('/api/rhyme', async (req, res) => {
+  const { nuclei } = req.query
+  const nucleiList = nuclei.split('\xa0')
+
+  const words = await Word.findAll({
+  where: sequelize.where(
+    sequelize.fn('CONCAT', '\xa0', sequelize.col('rhyme_permutation'), '\xa0'),
+    { [Op.like]: `%\xa0${nuclei}\xa0%` }
+  )
+  })
+
+  const wordsWithPos = words.map(w => {
+    const syllables = w.rhyme_permutation.split('\xa0')
+    const startPos = syllables.findIndex((s, i) =>
+      nucleiList.every((nc, j) => syllables[i + j] === nc)
+    )
+    const distanceToEnd = w.syllable_count - startPos - 1
+    return {
+      id: w.id,
+      word: w.word,
+      syllable_count: w.syllable_count,
+      rhyme_permutation: w.rhyme_permutation,
+      distanceToEnd
+    }
+  })
+
+  wordsWithPos.sort((a, b) => a.distanceToEnd - b.distanceToEnd || a.syllable_count - b.syllable_count)
+
+  res.json(wordsWithPos)
+
+})
+
 const start = async () => {
   await connectToDatabase()
   await sequelize.sync()
