@@ -23,7 +23,7 @@ app.get('/api/search', async (req, res) => {
     where: {
       word: { [Op.like]: `%${query}%` }
     },
-    limit: 10
+    limit: 30
   })
 
   res.json(words)

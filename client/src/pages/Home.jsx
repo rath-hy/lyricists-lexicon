@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import TextField from '@mui/material/TextField'
+import List from '@mui/material/List'
+import ListItemButton from '@mui/material/ListItemButton'
+import ListItemText from '@mui/material/ListItemText'
+import Paper from '@mui/material/Paper'
 
 function Home() {
   const [query, setQuery] = useState('')
@@ -21,20 +26,66 @@ function Home() {
   }
 
   return (
-    <div>
-      <h1>គម្ពីរកវី</h1>
-      <input
-        type="text"
-        value={query}
-        onChange={handleChange}
-      />
-      <ul>
-        {results.map(word => (
-          <li key={word.id} onClick={() => navigate(`/word/${word.id}`)}>
-            {word.word}
-          </li>
-        ))}
-      </ul>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+    }}>
+      <div style={{ width: '500px', position: 'relative' }}>
+        <h1 style={{
+          fontSize: '3.5rem',
+          fontWeight: '300',
+          letterSpacing: '0.05em',
+          textAlign: 'center',
+          position: 'absolute',
+          width: '100%',
+          bottom: '100%',
+          marginBottom: '1.5rem'
+        }}>
+          គម្ពីរកវី
+        </h1>
+
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="ស្វែងរក..."
+          value={query}
+          onChange={handleChange}
+          autoComplete="off"
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '24px',
+            }
+          }}
+        />
+
+        {results.length > 0 && (
+          <Paper elevation={3} style={{
+            position: 'absolute',
+            width: '100%',
+            zIndex: 10,
+            borderRadius: '12px',
+            marginTop: '4px',
+            maxHeight: '250px',
+            overflowY: 'auto'
+          }}>
+            <List disablePadding>
+              {results.map(word => (
+                <ListItemButton
+                  key={word.id}
+                  onClick={() => {
+                    navigate(`/word/${word.id}`)
+                    window.scrollTo(0, 0)
+                  }}
+                >
+                  <ListItemText primary={word.word} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Paper>
+        )}
+      </div>
     </div>
   )
 }

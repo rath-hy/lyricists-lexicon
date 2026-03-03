@@ -1,33 +1,49 @@
 import { useEffect, useState, useRef } from 'react'
-import { useParams } from 'react-router-dom'
-import { useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
+import homeIcon from '../../public/angkor.svg'
+import Tabs from '@mui/material/Tabs'
+import Tab from '@mui/material/Tab'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 
 function WordPage() {
   const { id } = useParams()
   const [word, setWord] = useState(null)
-  const [selected, setSelected] = useState(null)
+  const [selectedIndices, setSelectedIndices] = useState(null)
   const [consonanceResults, setConsonanceResults] = useState([])
-  const [selectedNuclei, setSelectedNuclei] = useState(null)
+  const [selectedNucleiIndices, setSelectedNucleiIndices] = useState(null)
   const [rhymeResults, setRhymeResults] = useState([])
   const consonanceCache = useRef({})
   const rhymeCache = useRef({})
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState(0)
 
   useEffect(() => {
+    setWord(null)
+    setSelectedIndices(null)
+    setConsonanceResults([])
+    setSelectedNucleiIndices(null)
+    setRhymeResults([])
+
     fetch(`/api/words/${id}`)
       .then(res => res.json())
       .then(data => {
         setWord(data)
         const onsets = data.onset_permutation.trim().split('\xa0')
-        setSelected(onsets)
+        setSelectedIndices(onsets.map((_, i) => i))
         const nuclei = data.rhyme_permutation.trim().split('\xa0')
-        setSelectedNuclei([nuclei[nuclei.length - 1]])
+        setSelectedNucleiIndices([nuclei.length - 1])
       })
   }, [id])
 
   useEffect(() => {
-    if (!selected) return
-    const key = [...selected].sort().join('\xa0')
+    if (!selectedIndices || !word) return
+    const onset_perm = word.onset_permutation.trim().split('\xa0')
+    const key = selectedIndices.map(i => onset_perm[i]).sort().join('\xa0')
+    if (!key) {
+      setConsonanceResults([])
+      return
+    }
     if (consonanceCache.current[key]) {
       setConsonanceResults(consonanceCache.current[key])
       return
@@ -38,11 +54,16 @@ function WordPage() {
         consonanceCache.current[key] = data
         setConsonanceResults(data)
       })
-  }, [selected])
+  }, [selectedIndices, id])
 
   useEffect(() => {
-    if (!selectedNuclei) return
-    const key = selectedNuclei.join('\xa0')
+    if (!selectedNucleiIndices || !word) return
+    const rhyme_perm = word.rhyme_permutation.trim().split('\xa0')
+    const key = selectedNucleiIndices.map(i => rhyme_perm[i]).join('\xa0')
+    if (!key) {
+      setRhymeResults([])
+      return
+    }
     if (rhymeCache.current[key]) {
       setRhymeResults(rhymeCache.current[key])
       return
@@ -53,99 +74,111 @@ function WordPage() {
         rhymeCache.current[key] = data
         setRhymeResults(data)
       })
-  }, [selectedNuclei])
+  }, [selectedNucleiIndices])
 
-  if (!word || !selected || !selectedNuclei) return <div>Loading...</div>
+  if (!word || !selectedIndices || selectedNucleiIndices === null) return <div>Loading...</div>
 
   const onset_perm = word.onset_permutation.trim().split('\xa0')
   const rhyme_perm = word.rhyme_permutation.trim().split('\xa0')
   const unique_onset_perms = [...new Set(consonanceResults.map(r => r.onset_permutation))]
+  const unique_end_distance = [...new Set(rhymeResults.map(r => r.distanceToEnd))]
 
-  const handleOnsetChange = (o) => {
-    if (selected.includes(o)) {
-      setSelected(selected.filter(item => item !== o))
+  const handleOnsetChange = (index) => {
+    if (selectedIndices.includes(index)) {
+      setSelectedIndices(selectedIndices.filter(i => i !== index))
     } else {
-      setSelected([...selected, o])
+      setSelectedIndices([...selectedIndices, index])
     }
   }
 
-  const unique_end_distance = [...new Set(rhymeResults.map(r => r.distanceToEnd))]
-
-  const handleNucleusChange = (nc) => {
-    let newSelected
-    if (selectedNuclei.includes(nc)) {
-      newSelected = selectedNuclei.filter(item => item !== nc)
+  const handleNucleusChange = (index) => {
+    if (selectedNucleiIndices.includes(index)) {
+      setSelectedNucleiIndices(selectedNucleiIndices.filter(i => i !== index))
     } else {
-      newSelected = rhyme_perm.filter(item => selectedNuclei.includes(item) || item === nc)
+      const newSelected = rhyme_perm
+        .map((_, i) => i)
+        .filter(i => selectedNucleiIndices.includes(i) || i === index)
+      setSelectedNucleiIndices(newSelected)
     }
-    setSelectedNuclei(newSelected)
   }
 
   return (
     <div>
-      <h1>{word.word}</h1>
+      <img src={homeIcon} width={50} height={50} onClick={() => navigate('/')} style={{cursor: 'pointer'}} />
 
-      <fieldset>
-        <legend>រណ្ដំ (Consonance)</legend>
-        {onset_perm.map((o, index) => (
-          <div key={index} style={{display: 'inline'}}>
-            <input
-              type="checkbox"
-              id={`onset-${index}`}
-              value={o}
-              checked={selected.includes(o)}
-              onChange={() => handleOnsetChange(o)}
-            />
-            <label htmlFor={`onset-${index}`}>{o}</label>
+      <h1 style={{textAlign: 'center'}}>{word.word}</h1>
+
+      <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} variant="fullWidth">
+        <Tab label="រណ្ដំ" sx={{ fontSize: '1.2rem' }} />
+        <Tab label="ចួន" sx={{ fontSize: '1.2rem' }} />
+      </Tabs>
+
+      {activeTab === 0 && (
+        <>
+          <div style={{display: 'flex', justifyContent: 'center', margin: '1rem 0'}}>
+            <ToggleButtonGroup>
+              {onset_perm.map((o, index) => (
+                <ToggleButton
+                  key={index}
+                  value={index}
+                  selected={selectedIndices.includes(index)}
+                  onChange={() => handleOnsetChange(index)}
+                >
+                  {o}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
           </div>
-        ))}
-      </fieldset>
 
-      {unique_onset_perms.map(p => (
-        <div key={p}>
-          <h2>{p}</h2>
-          {consonanceResults.filter(w => w.onset_permutation === p).map(r => (
-            <span key={r.id} onClick={() => {navigate(`/word/${r.id}`); window.scrollTo(0, 0)}}>{r.word} </span>
-          ))}
-        </div>
-      ))}
-
-      <fieldset>
-        <legend>ចួន (Rhyme)</legend>
-        {rhyme_perm.map((nc, index) => (
-          <div key={index} style={{display: 'inline'}}>
-            <input
-              type="checkbox"
-              id={`nucleus-${index}`}
-              value={nc}
-              checked={selectedNuclei.includes(nc)}
-              onChange={() => handleNucleusChange(nc)}
-            />
-            <label htmlFor={`nucleus-${index}`}>{nc}</label>
-          </div>
-        ))}
-      </fieldset>
-
-      <ul>
-        {unique_end_distance.map(d => {
-          const wordsAtDistance = rhymeResults.filter(r => r.distanceToEnd === d)
-          const unique_syllable_counts = [...new Set(wordsAtDistance.map(r => r.syllable_count))]
-          return (
-            <div key={d}>
-              <h2>{d}</h2>
-              {unique_syllable_counts.map(sc => (
-                <div key={sc}>
-                  <h3>{sc}</h3>
-                  {wordsAtDistance.filter(r => r.syllable_count === sc).map(w => (
-                    
-                    <span key={w.id} onClick={() => {navigate(`/word/${w.id}`); window.scrollTo(0, 0)}}>{w.word} </span>
-                  ))}
-                </div>
+          {unique_onset_perms.map(p => (
+            <div key={p}>
+              <h2 style={{textAlign: 'center'}}>{p}</h2>
+              {consonanceResults.filter(w => w.onset_permutation === p).map(r => (
+                <span key={r.id} onClick={() => { navigate(`/word/${r.id}`); window.scrollTo(0, 0) }} style={{cursor: 'pointer'}}>{r.word} </span>
               ))}
             </div>
-          )
-        })}
-      </ul>
+          ))}
+        </>
+      )}
+
+      {activeTab === 1 && (
+        <>
+          <div style={{display: 'flex', justifyContent: 'center', margin: '1rem 0'}}>
+            <ToggleButtonGroup>
+              {rhyme_perm.map((nc, index) => (
+                <ToggleButton
+                  key={index}
+                  value={index}
+                  selected={selectedNucleiIndices.includes(index)}
+                  onChange={() => handleNucleusChange(index)}
+                >
+                  {nc}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          </div>
+
+          <ul>
+            {unique_end_distance.map(d => {
+              const wordsAtDistance = rhymeResults.filter(r => r.distanceToEnd === d)
+              const unique_syllable_counts = [...new Set(wordsAtDistance.map(r => r.syllable_count))]
+              return (
+                <div key={d}>
+                  <h2 style={{textAlign: 'center'}}>{d}</h2>
+                  {unique_syllable_counts.map(sc => (
+                    <div key={sc}>
+                      <strong>{`(${sc}) `}</strong>
+                      {wordsAtDistance.filter(r => r.syllable_count === sc).map(w => (
+                        <span key={w.id} onClick={() => { navigate(`/word/${w.id}`); window.scrollTo(0, 0) }} style={{cursor: 'pointer'}}>{w.word} </span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </ul>
+        </>
+      )}
     </div>
   )
 }
