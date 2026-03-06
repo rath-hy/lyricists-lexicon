@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import homeIcon from '../../public/angkor.svg'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -102,18 +102,62 @@ function WordPage() {
     }
   }
 
+  const toKhmerNumeral = (n) => {
+    const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩']
+    return String(n).split('').map(d => khmerDigits[parseInt(d)]).join('')
+  }
+
   return (
-    <div>
-      <img src={homeIcon} width={50} height={50} onClick={() => navigate('/')} style={{cursor: 'pointer'}} />
+    <div style={{margin: '0 auto', padding: '3rem' }}>
+      <ArrowBackIcon sx={{ fontSize: 30 }} onClick={() => navigate('/')} />
 
       <h1 style={{textAlign: 'center'}}>{word.word}</h1>
 
       <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} variant="fullWidth">
-        <Tab label="រណ្ដំ" sx={{ fontSize: '1.2rem' }} />
         <Tab label="ចួន" sx={{ fontSize: '1.2rem' }} />
+        <Tab label="រណ្ដំ" sx={{ fontSize: '1.2rem' }} />
       </Tabs>
 
       {activeTab === 0 && (
+        <>
+          <div style={{display: 'flex', justifyContent: 'center', margin: '1rem 0'}}>
+            <ToggleButtonGroup>
+              {rhyme_perm.map((nc, index) => (
+                <ToggleButton
+                  key={index}
+                  value={index}
+                  selected={selectedNucleiIndices.includes(index)}
+                  onChange={() => handleNucleusChange(index)}
+                >
+                  {nc}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          </div>
+
+          <ul>
+            {unique_end_distance.map(d => {
+              const wordsAtDistance = rhymeResults.filter(r => r.distanceToEnd === d)
+              const unique_syllable_counts = [...new Set(wordsAtDistance.map(r => r.syllable_count))]
+              return (
+                <div key={d}>
+                  <h2 style={{textAlign: 'center'}}>{`${toKhmerNumeral(d)}`}</h2>
+                  {unique_syllable_counts.map(sc => (
+                    <div key={sc}>
+                      <strong style={{ fontFamily: 'Garamond, "EB Garamond", serif', fontSize: '1.1em' }}>{`(${sc}) `}</strong>
+                      {wordsAtDistance.filter(r => r.syllable_count === sc).map(w => (
+                        <span key={w.id} onClick={() => { navigate(`/word/${w.id}`); window.scrollTo(0, 0) }} style={{cursor: 'pointer'}}>{w.word} </span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </ul>
+        </>
+      )}
+
+      {activeTab === 1 && (
         <>
           <div style={{display: 'flex', justifyContent: 'center', margin: '1rem 0'}}>
             <ToggleButtonGroup>
@@ -141,44 +185,6 @@ function WordPage() {
         </>
       )}
 
-      {activeTab === 1 && (
-        <>
-          <div style={{display: 'flex', justifyContent: 'center', margin: '1rem 0'}}>
-            <ToggleButtonGroup>
-              {rhyme_perm.map((nc, index) => (
-                <ToggleButton
-                  key={index}
-                  value={index}
-                  selected={selectedNucleiIndices.includes(index)}
-                  onChange={() => handleNucleusChange(index)}
-                >
-                  {nc}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          </div>
-
-          <ul>
-            {unique_end_distance.map(d => {
-              const wordsAtDistance = rhymeResults.filter(r => r.distanceToEnd === d)
-              const unique_syllable_counts = [...new Set(wordsAtDistance.map(r => r.syllable_count))]
-              return (
-                <div key={d}>
-                  <h2 style={{textAlign: 'center'}}>{d}</h2>
-                  {unique_syllable_counts.map(sc => (
-                    <div key={sc}>
-                      <strong>{`(${sc}) `}</strong>
-                      {wordsAtDistance.filter(r => r.syllable_count === sc).map(w => (
-                        <span key={w.id} onClick={() => { navigate(`/word/${w.id}`); window.scrollTo(0, 0) }} style={{cursor: 'pointer'}}>{w.word} </span>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )
-            })}
-          </ul>
-        </>
-      )}
     </div>
   )
 }
