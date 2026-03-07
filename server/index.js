@@ -1,9 +1,8 @@
 require('dotenv').config()
-console.log(process.env.DATABASE_URL)
 const express = require('express')
 const cors = require('cors')
 const { connectToDatabase, sequelize } = require('./util/db')
-const { Word, Syllable } = require('./models')
+const { Word } = require('./models')
 const { Op } = require('sequelize')
 
 const app = express()
@@ -18,31 +17,23 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/search', async (req, res) => {
   const { query } = req.query
-
   const words = await Word.findAll({
-    where: {
-      word: { [Op.like]: `%${query}%` }
-    },
+    where: { word: { [Op.like]: `%${query}%` } },
     limit: 30
   })
-
   res.json(words)
 })
 
-// add new endpoint
 app.get('/api/words/:id', async (req, res) => {
   const word = await Word.findByPk(req.params.id)
   res.json(word)
 })
 
-app.get(`/api/consonance`, async (req, res) => {
-  const onset_combo = req.query.onset_combo
+app.get('/api/consonance', async (req, res) => {
+  const { onset_combo } = req.query
   const words = await Word.findAll({
-    where: {
-      onset_combination: onset_combo
-    },
+    where: { onset_combination: onset_combo }
   })
-  
   res.json(words.map(w => ({
     id: w.id,
     word: w.word,
@@ -56,10 +47,10 @@ app.get('/api/rhyme', async (req, res) => {
   const nucleiList = nuclei.split('\xa0')
 
   const words = await Word.findAll({
-  where: sequelize.where(
-    sequelize.fn('CONCAT', '\xa0', sequelize.col('rhyme_permutation'), '\xa0'),
-    { [Op.like]: `%\xa0${nuclei}\xa0%` }
-  )
+    where: sequelize.where(
+      sequelize.fn('CONCAT', '\xa0', sequelize.col('rhyme_permutation'), '\xa0'),
+      { [Op.like]: `%\xa0${nuclei}\xa0%` }
+    )
   })
 
   const wordsWithPos = words.map(w => {
@@ -78,9 +69,7 @@ app.get('/api/rhyme', async (req, res) => {
   })
 
   wordsWithPos.sort((a, b) => a.distanceToEnd - b.distanceToEnd || a.syllable_count - b.syllable_count)
-
   res.json(wordsWithPos)
-
 })
 
 const start = async () => {
