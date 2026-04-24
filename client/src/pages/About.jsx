@@ -7,7 +7,7 @@ const content = {
     title: "About",
     body: [
       <>
-        This is the website version of The Lyricist's Lexicon (nicknamed the "poet's dictionary"), a pair of books that catalogue rhymes and consonances in Khmer. Authored in 2024 by Puthyrath Hy, the books can be downloaded <a href="https://drive.google.com/drive/folders/1XWe2odMrgn3ZwdIoZfhy2WHQG7_HgCDx?usp=sharing" target="_blank" rel="noreferrer">here</a>. If you'd like to learn more about their genesis, please visit the <a href="https://puthyrathy.com" target="_blank" rel="noreferrer">author's personal website</a>.
+        This is the website version of the Lyricist's Lexicon (nicknamed the "poet's bible"), a pair of books that catalogue rhymes and consonances in Khmer. Authored in 2024 by Puthyrath Hy, the books can be downloaded <a href="https://drive.google.com/drive/folders/1XWe2odMrgn3ZwdIoZfhy2WHQG7_HgCDx?usp=sharing" target="_blank" rel="noreferrer">here</a>. If you'd like to learn more about their genesis, please visit the <a href="https://puthyrathy.com" target="_blank" rel="noreferrer">author's personal website</a>.
       </>,
       `"Consonance" is the English translation the author chose for the Khmer concept of rundom (រណ្ដំ). Technically, rundom is a general term that can refer to either the matching of consonants or of vowels, but because vowel rundom bears similarities to rhyme, the Lyricist's Lexicon uses rundom exclusively to refer to the matching of initial consonant sounds across words, as in "bitter", "batter", and "butter". A more precise if less melodious translation would be cluster alliteration.`,
       `Please contact puthyrathy@gmail.com to report a bug or an error.`
